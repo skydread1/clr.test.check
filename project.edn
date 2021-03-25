@@ -1,0 +1,3 @@
+{:name "clojure/test.check port to CLR and compatible with `magic` compiler"
+ :description "Adapat the port `clojure/clr.test.check` to be able to run on both JVM and CLR (using `magic`)."
+ :source-paths ["test"]}
