@@ -9,20 +9,18 @@
 
 (ns clojure.test.check.properties
   (:require [clojure.test.check.generators :as gen]
-            [clojure.test.check.results :as results])
-  #?(:cljs (:require-macros [clojure.test.check.properties :refer [for-all]])))
+            [clojure.test.check.results :as results]))
 
 (defrecord ErrorResult [error]
   results/Result
   (pass? [_] false)
   (result-data [_]
     ;; spelling out the whole keyword here since `::error` is
-    ;; different in self-hosted cljs.
     {:clojure.test.check.properties/error error}))
 
 (defn ^:private exception?
   [x]
-  (instance? #?(:clj Throwable :cljs js/Error :cljr Exception) x))                      ;;; Added :cljr clause
+  (instance? #?(:clj Throwable :cljr Exception) x))
 
 (defn ^:private apply-gen
   [function]
@@ -36,7 +34,7 @@
                        (throw ret)
                        ret))
                    #?(:clj (catch java.lang.ThreadDeath t (throw t)))
-                   (catch #?(:clj Throwable :cljs :default :cljr Exception) ex         ;;; Added :cljr clause
+                   (catch #?(:clj Throwable :cljr Exception) ex
                      (->ErrorResult ex)))]
       {:result result
        :function function
@@ -47,9 +45,7 @@
   and a function of N args, and returns a property that calls the
   function with generated values and tests the return value for
   truthiness, like with `for-all`.
-
   Example:
-
   (for-all* [gen/large-integer gen/large-integer]
             (fn [a b] (>= (+ a b) a)))"
   [args function]
@@ -69,22 +65,19 @@
   "Returns a property, which is the combination of some generators and
   an assertion that should be true for all generated values. Properties
   can be used with `quick-check` or `defspec`.
-  
   `for-all` takes a `let`-style bindings vector, where the right-hand
   side of each binding is a generator.
-
   The body should be an expression of the generated values that will
   be tested for truthiness, unless it is a special implementation of
   the clojure.test.check.results/Result protocol. Exceptions in the
   body will be caught and treated as failures.
-
   When there are multiple binding pairs, the earlier pairs are not
   visible to the later pairs.
   If there are multiple body expressions, all but the last one are
   executed for side effects, as with `do`.
   Example:
   (for-all [a gen/large-integer
-            b gen/large-integer]		
+            b gen/large-integer]
     (>= (+ a b) a))"
   [bindings & body]
   `(for-all* ~(vec (binding-gens bindings))

@@ -7,10 +7,7 @@
 ;   You must not remove this notice, or any other, from this software.
 
 (ns clojure.test.check.results-test
-  (:require #?(:cljs
-               [cljs.test :as test :refer-macros [are deftest testing is]])
-            #?(:default                                                             ;;; changed :clj to :default
-               [clojure.test :refer :all])
+  (:require [clojure.test :refer :all]
             [clojure.test.check.results :as results]))
 
 (deftest default-passing-values
