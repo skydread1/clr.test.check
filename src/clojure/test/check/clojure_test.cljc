@@ -8,12 +8,10 @@
 ;   You must not remove this notice, or any other, from this software.
 
 (ns clojure.test.check.clojure-test
-  (:require #?(:default  [clojure.test :as ct]                                       ;;; changed :clj to :default
-               :cljs [cljs.test :as ct :include-macros true])
+  (:require [clojure.test :as ct]
             [clojure.test.check :as tc]
-			[clojure.test.check.clojure-test.assertions]
-            [clojure.test.check.impl :refer [get-current-time-millis]])
-  #?(:cljs (:require-macros [clojure.test.check.clojure-test :refer [defspec]])))
+            [clojure.test.check.clojure-test.assertions]
+            [clojure.test.check.impl :refer [get-current-time-millis]]))
 
 (defn assert-check
   [{:keys [result result-data] :as m}]
@@ -29,8 +27,7 @@
   [{:keys [type] :as args}]
   (case type
     :complete
-    (let [testing-vars #?(:clj ct/*testing-vars* :cljr ct/*testing-vars*                     ;;; Added :cljr
-                          :cljs (:testing-vars ct/*current-env*))
+    (let [testing-vars ct/*testing-vars*
           params       (merge (select-keys args [:result :num-tests :seed
                                                  :time-elapsed-ms])
                               (when (seq testing-vars)
@@ -96,20 +93,17 @@
           times#
           (vary-meta ~property assoc :name '~name)
           (apply concat options#)))))))
-  
+
 (def ^:dynamic *report-trials*
   "Controls whether property trials should be reported via clojure.test/report.
   Valid values include:
-
   * false - no reporting of trials (default)
   * a function - will be passed a clojure.test/report-style map containing
   :clojure.test.check/property and :clojure.test.check/trial slots
   * true - provides quickcheck-style trial reporting (dots) via
   `trial-report-dots`
-
   (Note that all reporting requires running `quick-check` within the scope of a
   clojure.test run (via `test-ns`, `test-all-vars`, etc.))
-
   Reporting functions offered by clojure.test.check include `trial-report-dots` and
   `trial-report-periodic` (which prints more verbose trial progress information
   every `*trial-report-period*` milliseconds)."
@@ -132,13 +126,11 @@
   (or (-> property-fun meta :name) (ct/testing-vars-str report-map)))
 
 (defn with-test-out* [f]
-  #?(:default  (ct/with-test-out (f))                                                             ;;; changed :clj to :default
-     :cljs (f)))
+  (ct/with-test-out (f)))
 
 (defn trial-report-periodic
   "Intended to be bound as the value of `*report-trials*`; will emit a verbose
   status every `*trial-report-period*` milliseconds, like this one:
-
   Passing trial 3286 / 5000 for (your-test-var-name-here) (:)"
   [m]
   (let [t (get-current-time-millis)]
@@ -165,39 +157,37 @@
   report shrunk results. Defaults to true."
   true)
 
-(when #?(:clj true :cljr true :cljs (not (and *ns* (re-matches #".*\$macros" (name (ns-name *ns*))))))                 ;;; Added :cljr
+(when true
   ;; This check accomodates a number of tools that rebind ct/report
   ;; to be a regular function instead of a multimethod, and may do
   ;; so before this code is loaded (see TCHECK-125)
-  (if-not (instance? #?(:clj clojure.lang.MultiFn :cljr clojure.lang.MultiFn :cljs MultiFn) ct/report)                 ;;; Added :cljr
-    (binding [*out* #?(:clj *err* :cljr *err* :cljs *out*)]                                                             ;;; Added :cljr
-      (println "clojure.test/report is not a multimethod, some reporting functions have been disabled."))              ;;; Added :cljr
-    (let [begin-test-var-method (get-method ct/report #?(:clj  :begin-test-var :cljr  :begin-test-var
-                                                         :cljs [::ct/default :begin-test-var]))]
-      (defmethod ct/report #?(:clj  :begin-test-var  :cljr  :begin-test-var                                            ;;; Added :cljr
-                              :cljs [::ct/default :begin-test-var]) [m]
+  (if-not (instance? clojure.lang.MultiFn ct/report)
+    (binding [*out* *err*]
+      (println "clojure.test/report is not a multimethod, some reporting functions have been disabled."))
+    (let [begin-test-var-method (get-method ct/report :begin-test-var)]
+      (defmethod ct/report :begin-test-var [m]
         (reset! last-trial-report (get-current-time-millis))
         (when begin-test-var-method (begin-test-var-method m)))
 
-      (defmethod ct/report #?(:clj ::trial :cljr ::trial :cljs [::ct/default ::trial]) [m]                             ;;; Added :cljr
+      (defmethod ct/report ::trial [m]
         (when-let [trial-report-fn (and *report-trials*
                                         (if (true? *report-trials*)
                                           trial-report-dots
                                           *report-trials*))]
           (trial-report-fn m)))
 
-      (defmethod ct/report #?(:clj ::shrinking :cljr ::shrinking :cljs [::ct/default ::shrinking]) [m]                 ;;; Added :cljr
+      (defmethod ct/report ::shrinking [m]
         (when *report-shrinking*
           (with-test-out*
             (fn []
               (println "Shrinking" (get-property-name m)
-                "starting with parameters" (pr-str (::params m)))))))
+                       "starting with parameters" (pr-str (::params m)))))))
 
-      (defmethod ct/report #?(:clj ::complete :cljr ::complete :cljs [::ct/default ::complete]) [m]                    ;;; Added :cljr
+      (defmethod ct/report ::complete [m]
         (when *report-completion*
           (prn (::complete m))))
 
-      (defmethod ct/report #?(:clj ::shrunk :cljr ::shrunk :cljs [::ct/default ::shrunk]) [m]                          ;;; Added :cljr
+      (defmethod ct/report ::shrunk [m]
         (when *report-completion*
           (with-test-out*
             (fn [] (prn m))))))))
