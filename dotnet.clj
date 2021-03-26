@@ -1,4 +1,4 @@
-(ns dotnet-tasks
+(ns dotnet
 
   "Dotnet related tasks such as compiling and testing on the clr using `magic` and `nostrand`
 
