@@ -1,32 +1,53 @@
-# clr.test.check
+# clr.test.check with MAGIC
 
-A port of [clojure/test/check](https://github.com/clojure/test.check) library to ClojureCLR.
+A port of [clojure/test/check](https://github.com/clojure/test.check) library to `magic`.
 
-From the original's README:
+## What is Magic
 
-> _test.check_ is a Clojure property-based testing tool inspired by QuickCheck. The core idea of _test.check_ is that instead of enumerating expected input and output for unit tests, you write properties about your function that should hold true for all inputs. This lets you write concise, powerful tests
+From the [README](https://github.com/nasser/magic) :
 
-## Releases
+> MAGIC is a compiler for Clojure written in Clojure targeting the Common Language Runtime. Its goals are to:
+>
+> Take full advantage of the CLR's features to produce better byte code
+> Leverage Clojure's functional programming and data structures to be more tunable, composeable, and maintainable
 
-Nuget reference:
 
-    PM> Install-Package clojure.test.check
+## Why a specific port
 
-Leiningen/Clojars reference:
+We could think that the [clojure/clr.test.check](https://github.com/clojure/clr.tools.nrepl) is enough as it replaces the Java native function with the C# equivalents. In theory yes, the `magic` compiler should be able to compile what `clojureCLR` compile.
 
-   [org.clojure.clr/test.check "1.1.0.1"]
+However, `magic` is not fully stable and some minors changes are necessary to make it work, hence this fork.
 
-   
-## Notes on the ported code
+## Platform independence
 
-None, so far.
+This fork allows you to compile on both `JVM` and `CLR`. The reader conditionals were added to:
+- be able to run, test and debug on both `JVM` and `CLR`
+- ease the debug and test comparisons between environments
+- highlight better the native code port (instead of just putting the equivalents in comments)
 
-## Contributing
+## Use the library
 
-We can not accept pull requests. Please see [CONTRIBUTING.md](CONTRIBUTING.md)
-for details.
+### With the CLR (using Magic)
 
-   
+To compile, run or test a Clojure project in CLR with `magic`, you need to use [nostrand](https://github.com/nasser/nostrand).
+
+`nostrand` is just a tool that lets you use `magic` without having to take care of the bootrapping and configuration.
+
+`nostrand` has its own project manager in a file name `project.edn` that has a syntax similar to the lein project manager `project.clj`.
+
+To add the library to your project, just add the dependency to your `project.edn` :
+
+```clojure
+{:name "My Clojure Project"
+ :dependencies [[:github skydread1/clr.test.check "magic"
+                 :paths ["src"]]}
+```
+More information can be found in the [nostrand README](https://github.com/nasser/nostrand/blob/master/README.md).
+
+### With the JVM
+
+Same as for a regular Clojure library. Add it to your preferred project manager such as tool `deps.end` or lein `project.clj`.
+
 ## License
 
 Original:
