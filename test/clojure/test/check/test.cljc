@@ -292,7 +292,7 @@
 
     (testing "byte"                 (t gen/byte                 #(instance? Byte %)))
     #?(:clj (testing "bytes"        (t gen/bytes                #(instance? (Class/forName "[B") %)))
-       :cljr (testing "bytes"       (t gen/bytes                #(instance? |System.Byte [] | %))))
+       :cljr (testing "bytes"       (t gen/bytes                #(instance? |System.Byte[]| %))))
     (testing "char"                 (t gen/char                 is-char-fn))
     (testing "char-ascii"           (t gen/char-ascii           is-char-fn))
     (testing "char-alphanumeric"    (t gen/char-alphanumeric    is-char-fn))
