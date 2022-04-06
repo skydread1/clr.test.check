@@ -8,7 +8,7 @@
 ;   You must not remove this notice, or any other, from this software.
 
 (ns clojure.test.check.generators
-  (:refer-clojure :exclude [int vector list hash-map map keyword
+  (:refer-clojure :exclude [abs int vector list hash-map map keyword
                             char boolean byte bytes sequence
                             shuffle not-empty symbol namespace
                             set sorted-set uuid double let])
@@ -211,7 +211,7 @@
 (defn- calc-long
   [factor lower upper]
   ;; these pre- and post-conditions are disabled for deployment
-  #_ {:pre [(float? factor) (>= factor 0.0) (< factor 1.0)
+  #_ {:pre  [(float? factor) (>= factor 0.0) (< factor 1.0)
             (integer? lower) (integer? upper) (<= lower upper)]
       :post [(integer? %)]}
   ;; Use -' on width to maintain accuracy with overflow protection.
@@ -291,7 +291,7 @@
    (sized (fn [n] (resize (f n) generator)))))
 
 (defn choose
-  #?(:clj
+  #?(:default
      "Creates a generator that generates integers uniformly in the range
      `lower` to `upper`, inclusive.
          (gen/sample (gen/choose 200 800))
@@ -387,8 +387,8 @@
 (defn- such-that-helper
   [pred gen {:keys [ex-fn max-tries]} rng size]
   (loop [tries-left max-tries
-         rng rng
-         size size]
+         rng        rng
+         size       size]
     (if (zero? tries-left)
       (throw (ex-fn {:pred pred, :gen, gen :max-tries max-tries}))
       (clojure.core/let [[r1 r2] (random/split rng)
@@ -399,10 +399,10 @@
 
 (def ^:private
   default-such-that-opts
-  {:ex-fn (fn [{:keys [max-tries] :as arg}]
-            (ex-info (str "Couldn't satisfy such-that predicate after "
-                          max-tries " tries.")
-                     arg))
+  {:ex-fn     (fn [{:keys [max-tries] :as arg}]
+                (ex-info (str "Couldn't satisfy such-that predicate after "
+                              max-tries " tries.")
+                         arg))
    :max-tries 10})
 
 (defn such-that
@@ -427,14 +427,14 @@
    (such-that pred gen 10))
   ([pred gen max-tries-or-opts]
    (clojure.core/let [opts (cond (integer? max-tries-or-opts)
-                         {:max-tries max-tries-or-opts}
+                                 {:max-tries max-tries-or-opts}
 
-                         (map? max-tries-or-opts)
-                         max-tries-or-opts
+                                 (map? max-tries-or-opts)
+                                 max-tries-or-opts
 
-                         :else
-                         (throw (ex-info "Bad argument to such-that!" {:max-tries-or-opts
-                                                                       max-tries-or-opts})))
+                                 :else
+                                 (throw (ex-info "Bad argument to such-that!" {:max-tries-or-opts
+                                                                               max-tries-or-opts})))
               opts (merge default-such-that-opts opts)]
      (assert (generator? gen) "Second arg to such-that must be a generator")
      (make-gen
@@ -1037,19 +1037,18 @@
 (defn ^:private fifty-two-bit-reverse
   "Bit-reverses an integer in the range [0, 2^52)."
   [n]
-  #? (:clj
-      (-> n (Long/reverse) (unsigned-bit-shift-right 12))
-
-      :cljr
-      (if (nil? n) 0
-	        (loop [out 0
-                 n (long n)
-                 out-shifter (bit-shift-left 1 52)] ;;;  conditionalized the one difference.
-            (if (< n 1)
-              (* out out-shifter)
-              (recur (-> out (* 2) (+ (bit-and n 1)))
-                     (quot n 2) ;;;  conditionalized the one difference.
-                     (quot n 2)))))))
+  #?(:clj
+     (-> n (Long/reverse) (unsigned-bit-shift-right 12))
+     :cljr
+     (if (nil? n) 0
+	       (loop [out         0
+                n           (long n)
+                out-shifter (bit-shift-left 1 52)] ;;;  conditionalized the one difference.
+           (if (< n 1)
+             (* out out-shifter)
+             (recur (-> out (* 2) (+ (bit-and n 1)))
+                    (quot n 2) ;;;  conditionalized the one difference.
+                    (quot n 2)))))))
 
 (def ^:private backwards-shrinking-significand
   "Generates a 52-bit non-negative integer that shrinks toward having
@@ -1171,32 +1170,32 @@
   min precludes -Infinity, and supplying a max precludes +Infinity."
   {:added "0.9.0"}
   [{:keys [infinite? NaN? min max]
-    :or {infinite? true, NaN? true}}]
+    :or   {infinite? true NaN? true}}]
   (clojure.core/let [frequency-arg (cond-> [[95 (double-finite min max)]]
 
-                             (if (nil? min)
-                               (or (nil? max) (<= 0.0 max))
-                               (if (nil? max)
-                                 (<= min 0.0)
-                                 (<= min 0.0 max)))
-                             (conj
-                              ;; Add zeros here as a special case, since
-                              ;; the `finite` code considers zeros rather
-                              ;; complex (as they have a -1023 exponent)
-                              ;;
-                              ;; I think most uses can't distinguish 0.0
-                              ;; from -0.0, but seems worth throwing both
-                              ;; in just in case.
-                              [1 (return 0.0)]
-                              [1 (return -0.0)])
+                                     (if (nil? min)
+                                       (or (nil? max) (<= 0.0 max))
+                                       (if (nil? max)
+                                         (<= min 0.0)
+                                         (<= min 0.0 max)))
+                                     (conj
+                                      ;; Add zeros here as a special case, since
+                                      ;; the `finite` code considers zeros rather
+                                      ;; complex (as they have a -1023 exponent)
+                                      ;;
+                                      ;; I think most uses can't distinguish 0.0
+                                      ;; from -0.0, but seems worth throwing both
+                                      ;; in just in case.
+                                      [1 (return 0.0)]
+                                      [1 (return -0.0)])
 
-                             (and infinite? (nil? max))
-                             (conj [1 (return POS_INFINITY)])
+                                     (and infinite? (nil? max))
+                                     (conj [1 (return POS_INFINITY)])
 
-                             (and infinite? (nil? min))
-                             (conj [1 (return NEG_INFINITY)])
+                                     (and infinite? (nil? min))
+                                     (conj [1 (return NEG_INFINITY)])
 
-                             NaN? (conj [1 (return NAN)]))]
+                                     NaN? (conj [1 (return NAN)]))]
     (if (= 1 (count frequency-arg))
       (-> frequency-arg first second)
       (frequency frequency-arg))))
@@ -1205,6 +1204,7 @@
   "Generates 64-bit floating point numbers from the entire range,
   including +/- infinity and NaN. Use double* for more control."
   (double* {}))
+
 
 ;; bigints
 ;; ---------------------------------------------------------------------------
@@ -1436,12 +1436,14 @@
                                 (bit-or -9223372036854775808)
                                 (bit-and -4611686018427387905))]
         (rose/make-rose
-         #?(:clj (java.util.UUID. x1 x2) :cljr (System.Guid/NewGuid x1 x2))
+         #?(:clj (java.util.UUID. x1 x2)
+            :cljr (System.Guid. ^|System.Byte[]| (into-array Byte (concat (BitConverter/GetBytes ^long x1)
+                                                                          (BitConverter/GetBytes ^long x2)))))
          []))))))
 
 (defn ^:private base-simple-type
   [double-gen char-gen string-gen]
-  (one-of [int #?(:clj size-bounded-bigint :cljr size-bounded-bigint) double-gen char-gen
+  (one-of [int size-bounded-bigint double-gen char-gen
            string-gen ratio boolean keyword keyword-ns symbol symbol-ns uuid]))
 
 (def simple-type

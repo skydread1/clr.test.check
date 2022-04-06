@@ -32,25 +32,25 @@
                                                  :time-elapsed-ms])
                               (when (seq testing-vars)
                                 {:test-var (-> testing-vars first meta :name name)}))]
-      (ct/report {:type :clojure.test.check.clojure-test/complete
+      (ct/report {:type                                     :clojure.test.check.clojure-test/complete
                   :clojure.test.check.clojure-test/property (:property args)
                   :clojure.test.check.clojure-test/complete params}))
 
     :trial
-    (ct/report {:type :clojure.test.check.clojure-test/trial
+    (ct/report {:type                                     :clojure.test.check.clojure-test/trial
                 :clojure.test.check.clojure-test/property (:property args)
-                :clojure.test.check.clojure-test/trial [(:num-tests args)
+                :clojure.test.check.clojure-test/trial    [(:num-tests args)
                                                         (:num-tests-total args)]})
 
     :failure
-    (ct/report {:type :clojure.test.check.clojure-test/shrinking
+    (ct/report {:type                                     :clojure.test.check.clojure-test/shrinking
                 :clojure.test.check.clojure-test/property (:property args)
-                :clojure.test.check.clojure-test/params (vec (:fail args))})
+                :clojure.test.check.clojure-test/params   (vec (:fail args))})
 
     :shrunk
-    (ct/report {:type :clojure.test.check.clojure-test/shrunk
+    (ct/report {:type                                     :clojure.test.check.clojure-test/shrunk
                 :clojure.test.check.clojure-test/property (:property args)
-                :clojure.test.check.clojure-test/params (-> args :shrunk :smallest vec)})
+                :clojure.test.check.clojure-test/params   (-> args :shrunk :smallest vec)})
     nil))
 
 (def ^:dynamic *default-opts*
@@ -61,13 +61,13 @@
 (defn process-options
   {:no-doc true}
   [options]
-  (cond (nil? options) (merge {:num-tests *default-test-count*} *default-opts*)
+  (cond (nil? options)    (merge {:num-tests *default-test-count*} *default-opts*)
         (number? options) (assoc *default-opts* :num-tests options)
-        (map? options) (merge {:num-tests *default-test-count*}
+        (map? options)    (merge {:num-tests *default-test-count*}
                               *default-opts*
                               options)
-        :else (throw (ex-info (str "Invalid defspec options: " (pr-str options))
-                              {:bad-options options}))))
+        :else             (throw (ex-info (str "Invalid defspec options: " (pr-str options))
+                                          {:bad-options options}))))
 
 (defmacro defspec
   "Defines a new clojure.test test var that uses `quick-check` to verify the

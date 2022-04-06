@@ -10,6 +10,6 @@
 (ns clojure.test.check.impl)
 
 (defn get-current-time-millis []
-  #?(:clj  (System/currentTimeMillis)  
-     :cljr (Environment/TickCount)                                                    ;;; Added :cljr clause
+  #?(:clj  (System/currentTimeMillis)
+     :cljr (Environment/TickCount)
      :cljs (.valueOf (js/Date.))))

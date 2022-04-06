@@ -139,9 +139,9 @@
   (rand-double [this]
     (* double-unit (unsigned-bit-shift-right (long (rand-long this)) 11)))
   (split [this]
-    (let [state' (+ gamma state)
+    (let [state'  (+ gamma state)
           state'' (+ gamma state')
-          gamma' (mix-gamma state'')]
+          gamma'  (mix-gamma state'')]
       [(JavaUtilSplittableRandom. gamma state'')
        (JavaUtilSplittableRandom. gamma' (mix-64 state'))]))
   (split-n [this n]
@@ -154,14 +154,14 @@
         1 [this]
         (let [n-dec (dec n)]
           (loop [state state
-                 ret (transient [])]
+                 ret   (transient [])]
             (if (= n-dec (count ret))
               (-> ret
                   (conj! (JavaUtilSplittableRandom. gamma state))
                   (persistent!))
-              (let [state' (+ gamma state)
+              (let [state'  (+ gamma state)
                     state'' (+ gamma state')
-                    gamma' (mix-gamma state'')
+                    gamma'  (mix-gamma state'')
                     new-rng (JavaUtilSplittableRandom. gamma' (mix-64 state'))]
                 (recur state'' (conj! ret new-rng))))))))))
 
@@ -184,14 +184,14 @@
                   (initialValue []
                     (first (split (swap! a #(second (split %)))))))]
             (fn []
-              (let [rng (.get thread-local)
+              (let [rng         (.get thread-local)
                     [rng1 rng2] (split rng)]
                 (.set thread-local rng2)
                 rng1)))
      ;; might not guaranty independent results, workaround.
      :cljr (let [a (atom (make-java-util-splittable-random (- (Int64/MaxValue) (Environment/TickCount))))]
              (fn []
-               (let [rng (first (split (swap! a #(second (split %)))))
+               (let [rng         (first (split (swap! a #(second (split %)))))
                      [rng1 rng2] (split rng)]
                  (reset! a rng2)
                  rng1)))))

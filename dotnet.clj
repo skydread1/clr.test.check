@@ -15,36 +15,44 @@
 
   `nasser/nostrand` runs a clojure function that describes the files to be compiled."
 
-  (:require [clojure.test :refer [run-all-tests]]))
+  (:require [clojure.test :refer [run-all-tests]]
+            [magic.flags :as mflags]))
 
-(def tc-namespaces
-  '[ ;; SRC
-    clojure.test.check
-    ;; TEST
-    clojure.test.check.clojure-test-test
+(def prod-namespaces
+  '[clojure.test.check])
+
+(def test-namespaces
+  '[clojure.test.check.clojure-test-test
     clojure.test.check.random-test
     clojure.test.check.results-test
     clojure.test.check.rose-tree-test
     clojure.test.check.test])
 
-(defn build-tc
-  "Compiles the tc project to dlls.
-  This function is used my `nostrand` and is called from terminal in the root folder as:
-  nos dotnet-tasks/build-tc"
+(defn build
+  "Compiles the project to dlls.
+  This function is used by `nostrand` and is called from the terminal in the root folder as:
+  nos dotnet/build"
   []
   (binding [*compile-path* "build"
-            *unchecked-math* *warn-on-reflection*]
+            *unchecked-math* *warn-on-reflection*
+            mflags/*strongly-typed-invokes* true
+            mflags/*direct-linking*         true
+            mflags/*elide-meta*             false
+            mflags/*emit-il2cpp-workaround* true]
     (println "Compile into DLL To : " *compile-path*)
-    (doseq [ns tc-namespaces]
+    (doseq [ns prod-namespaces]
       (println (str "Compiling " ns))
       (compile ns))))
 
-(defn test-tc
-  "Run all the tc tests.
-  This function is used my `nostrand` and is called from terminal in the root folder as:
-  nos dotnet-tasks/test-tc"
+(defn run-tests
+  "Run all the tests on the CLR.
+  This function is used by `nostrand` and is called from the terminal in the root folder as:
+  nos dotnet/run-tests"
   []
-  (binding [ *unchecked-math* *warn-on-reflection*]
-    (doseq [ns tc-namespaces]
+  (binding [*unchecked-math* *warn-on-reflection*
+            mflags/*strongly-typed-invokes* true
+            mflags/*direct-linking*         true
+            mflags/*elide-meta*             false]
+    (doseq [ns (concat prod-namespaces test-namespaces)]
       (require ns))
     (run-all-tests)))

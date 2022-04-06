@@ -8,7 +8,7 @@
 
 (ns clojure.test.check.clojure-test.assertions.cljs)
 
-#?(:default                                                                             ;;; change :clj to :default
+#?(:default
    (try
      (require 'cljs.test
        '[clojure.test.check.clojure-test.assertions :as assertions])
