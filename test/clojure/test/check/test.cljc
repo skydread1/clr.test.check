@@ -643,6 +643,7 @@
        -100 0
        0 Int64/MaxValue
        Int64/MinValue Int64/MaxValue)))
+
 ;; edn rountrips
 ;; ---------------------------------------------------------------------------
 
@@ -650,11 +651,7 @@
   [value]
   (= value (-> value prn-str edn/read-string)))
 
-;; NOTE: The following syntax makes magic ignore all the rest of the file and still compile to dll :
-;; #{1E1000 -1E1000}
-;; even if I put :clj reader conditional for the JVM, magic still stops. to investigate...
-(def infinities #?(:clj #{Double/POSITIVE_INFINITY Double/NEGATIVE_INFINITY}
-                   :cljr #{Double/PositiveInfinity Double/NegativeInfinity}))
+(def infinities #{##Inf ##-Inf})
 
 (def infinity-syntax?
   (edn-roundtrip? (first infinities)))

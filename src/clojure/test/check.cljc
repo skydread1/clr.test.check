@@ -22,22 +22,22 @@
     [seed (random/make-random seed)]
     (let [non-nil-seed (get-current-time-millis)]
       [non-nil-seed (random/make-random non-nil-seed)])))
-	  
+
 (defn- complete
   [property num-trials seed start-time reporter-fn]
   (let [time-elapsed-ms (- (get-current-time-millis) start-time)]
-    (reporter-fn {:type :complete
-                  :property property
-                  :result true
-                  :pass? true
-                  :num-tests num-trials
+    (reporter-fn {:type            :complete
+                  :property        property
+                  :result          true
+                  :pass?           true
+                  :num-tests       num-trials
                   :time-elapsed-ms time-elapsed-ms
-                  :seed seed})
-    {:result true
-     :pass? true
-     :num-tests num-trials
+                  :seed            seed})
+    {:result          true
+     :pass?           true
+     :num-tests       num-trials
      :time-elapsed-ms time-elapsed-ms
-     :seed seed}))
+     :seed            seed}))
 
 
 (defn ^:private legacy-result
@@ -47,7 +47,7 @@
   (if (satisfies? results/Result result)
     (let [d (results/result-data result)]
       (if-let [[_ e] (find d :clojure.test.check.properties/error)]
-        #?(:clj e  :cljr e                                                ;;; added :cljr
+        #?(:default e
            :cljs (if (instance? js/Error e)
                    e
                    (ex-info "Non-Error object thrown in test"
@@ -58,7 +58,7 @@
 
 (defn quick-check
   "Tests `property` `num-tests` times.
-  
+
   Takes several optional keys:
 
   `:seed`
@@ -86,7 +86,7 @@
        :property        #<...>
        :result          true
        :result-data     {...}}
-	   
+
       ;; called after the first failing trial
       {:type         :failure
        :fail         [...failing args...]
@@ -109,9 +109,9 @@
        :result          true,
        :seed            1561826505982,
        :time-elapsed-ms 24}
-  
+
   If the test fails, the return value will be something like:
-  
+
       {:fail            [0],
        :failed-after-ms 0,
        :failing-size    0,
@@ -197,22 +197,22 @@
                                   (when (= :failure (:type m))
                                     (println \"Uh oh...\"))))"
   [num-tests property & {:keys [seed max-size reporter-fn]
-                         :or {max-size 200, reporter-fn (constantly nil)}}]
+                         :or   {max-size 200, reporter-fn (constantly nil)}}]
   (let [[created-seed rng] (make-rng seed)
-        size-seq (gen/make-size-range-seq max-size)
-        start-time (get-current-time-millis)]
-    (loop [so-far 0
+        size-seq           (gen/make-size-range-seq max-size)
+        start-time         (get-current-time-millis)]
+    (loop [so-far   0
            size-seq size-seq
-           rstate rng]
+           rstate   rng]
       (if (== so-far num-tests)
         (complete property num-tests created-seed start-time reporter-fn)
         (let [[size & rest-size-seq] size-seq
-              [r1 r2] (random/split rstate)
-              result-map-rose (gen/call-gen property r1 size)
-              result-map (rose/root result-map-rose)
-              result (:result result-map)
-              args (:args result-map)
-              so-far (inc so-far)]
+              [r1 r2]                (random/split rstate)
+              result-map-rose        (gen/call-gen property r1 size)
+              result-map             (rose/root result-map-rose)
+              result                 (:result result-map)
+              args                   (:args result-map)
+              so-far                 (inc so-far)]
           (if (results/pass? result)
             (do
               (reporter-fn {:type            :trial
@@ -227,17 +227,17 @@
               (recur so-far rest-size-seq r2))
             (failure property result-map-rose so-far size
                      created-seed start-time reporter-fn)))))))
-					 
+
 (defn- smallest-shrink
   [total-nodes-visited depth smallest start-time]
   (let [{:keys [result]} smallest]
     {:total-nodes-visited total-nodes-visited
-     :depth depth
-     :pass? false
-     :result (legacy-result result)
-     :result-data (results/result-data result)
-     :time-shrinking-ms (- (get-current-time-millis) start-time)
-     :smallest (:args smallest)}))
+     :depth               depth
+     :pass?               false
+     :result              (legacy-result result)
+     :result-data         (results/result-data result)
+     :time-shrinking-ms   (- (get-current-time-millis) start-time)
+     :smallest            (:args smallest)}))
 
 (defn- shrink-loop
   "Shrinking a value produces a sequence of smaller values of the same type.
@@ -254,22 +254,22 @@
 
   Calls reporter-fn on every shrink step."
   [rose-tree reporter-fn]
-  (let [start-time (get-current-time-millis)
+  (let [start-time         (get-current-time-millis)
         shrinks-this-depth (rose/children rose-tree)]
-    (loop [nodes shrinks-this-depth
-           current-smallest (rose/root rose-tree)
+    (loop [nodes               shrinks-this-depth
+           current-smallest    (rose/root rose-tree)
            total-nodes-visited 0
-           depth 0]
+           depth               0]
       (if (empty? nodes)
         (smallest-shrink total-nodes-visited depth current-smallest start-time)
         (let [;; can't destructure here because that could force
               ;; evaluation of (second nodes)
-              head (first nodes)
-              tail (rest nodes)
-              result (:result (rose/root head))
-              args (:args (rose/root head))
-              pass? (results/pass? result)
-              reporter-fn-arg {:type :shrink-step
+              head            (first nodes)
+              tail            (rest nodes)
+              result          (:result (rose/root head))
+              args            (:args (rose/root head))
+              pass?           (results/pass? result)
+              reporter-fn-arg {:type      :shrink-step
                                :shrinking {:args                args
                                            :depth               depth
                                            :pass?               (boolean pass?)
@@ -297,17 +297,17 @@
 (defn- failure
   [property failing-rose-tree trial-number size seed start-time reporter-fn]
   (let [failed-after-ms (- (get-current-time-millis) start-time)
-        root (rose/root failing-rose-tree)
-        result (:result root)
-        failure-data {:fail            (:args root)
-                      :failing-size    size
-                      :num-tests       trial-number
-                      :pass?           false
-                      :property        property
-                      :result          (legacy-result result)
-                      :result-data     (results/result-data result)
-                      :failed-after-ms failed-after-ms
-                      :seed            seed}]
+        root            (rose/root failing-rose-tree)
+        result          (:result root)
+        failure-data    {:fail            (:args root)
+                         :failing-size    size
+                         :num-tests       trial-number
+                         :pass?           false
+                         :property        property
+                         :result          (legacy-result result)
+                         :result-data     (results/result-data result)
+                         :failed-after-ms failed-after-ms
+                         :seed            seed}]
 
     (reporter-fn (assoc failure-data :type :failure))
 

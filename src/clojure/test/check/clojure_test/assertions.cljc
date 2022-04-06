@@ -23,9 +23,9 @@
      (drop-while
       #(let [class-name (.FullName (.GetType ^System.Diagnostics.StackFrame %))]
          (or (.StartsWith class-name "System")
-             (.StartsWith  class-name "clojure.test+")
-             (.StartsWith  class-name "clojure.test.check.clojure_test+")
-             (.StartsWith  class-name "clojure.test.check.clojure_test.assertions")))
+             (.StartsWith class-name "clojure.test+")
+             (.StartsWith class-name "clojure.test.check.clojure_test+")
+             (.StartsWith class-name "clojure.test.check.clojure_test.assertions")))
       st)))
 
 #?(:clj
@@ -46,12 +46,12 @@
 (defn check-results [m]
   (if (:pass? m)
     (t/do-report
-     {:type :pass
+     {:type    :pass
       :message (dissoc m :result)})
     (t/do-report
-     (merge {:type :fail
+     (merge {:type     :fail
              :expected {:result true}
-             :actual m}
+             :actual   m}
             #?(:clj
                (file-and-line* (test-context-stacktrace (.getStackTrace (Thread/currentThread))))
                :cljr
@@ -62,7 +62,12 @@
   `(let [m# ~(nth form 1)]
      (check-results m#)))
 
-
-(defmethod t/assert-expr 'clojure.test.check.clojure-test/check?
-  [_ form]
-  (check? _ form))
+#?(:default
+   (defmethod t/assert-expr 'clojure.test.check.clojure-test/check?
+     [_ form]
+     (check? _ form))
+   :cljs
+   (when (exists? js/cljs.test$macros)
+     (defmethod js/cljs.test$macros.assert_expr 'clojure.test.check.clojure-test/check?
+       [_ msg form]
+       (clojure.test.check.clojure-test.assertions/check? msg form))))

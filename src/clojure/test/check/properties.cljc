@@ -39,9 +39,9 @@
                    #?(:clj (catch java.lang.ThreadDeath t (throw t)))
                    (catch #?(:clj Throwable :cljr Exception) ex
                      (->ErrorResult ex)))]
-      {:result result
+      {:result   result
        :function function
-       :args args})))
+       :args     args})))
 
 (defn for-all*
   "A function version of `for-all`. Takes a sequence of N generators
