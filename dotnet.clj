@@ -19,7 +19,8 @@
             [magic.flags :as mflags]))
 
 (def prod-namespaces
-  '[clojure.test.check])
+  '[clojure.test.check
+    clojure.test.check.clojure-test])
 
 (def test-namespaces
   '[clojure.test.check.clojure-test-test

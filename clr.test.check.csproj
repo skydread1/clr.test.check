@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0</TargetFrameworks>
+        <OutputType>Library</OutputType>
+    </PropertyGroup>
+    <PropertyGroup>
+        <PackageId>clr.test.check</PackageId>
+        <Title>clr.test.check</Title>
+        <Product>clr.test.check</Product>
+        <AssemblyTitle>clr.test.check</AssemblyTitle>
+        <Description>Property-based testing of Clojure code</Description>
+        <Authors>skydread1</Authors>
+        <RepositoryUrl>https://github.com/skydread1/clr.test.check</RepositoryUrl>
+        <PackageTags>Clojure;Magic</PackageTags>
+        <Version>1.1.1</Version>
+    </PropertyGroup>
+    <ItemGroup>
+        <EmbeddedResource Include="build\clojure.test.check.clj.dll" />
+        <EmbeddedResource Include="build\clojure.test.check.clojure_test.assertions.clj.dll" />
+        <EmbeddedResource Include="build\clojure.test.check.clojure_test.clj.dll" />
+        <EmbeddedResource Include="build\clojure.test.check.generators.clj.dll" />
+        <EmbeddedResource Include="build\clojure.test.check.impl.clj.dll" />
+        <EmbeddedResource Include="build\clojure.test.check.random.clj.dll" />
+        <EmbeddedResource Include="build\clojure.test.check.results.clj.dll" />
+        <EmbeddedResource Include="build\clojure.test.check.rose_tree.clj.dll" />
+    </ItemGroup>
+</Project>
