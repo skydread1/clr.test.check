@@ -1,27 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+<package>
   <metadata>
     <id>clr.test.check</id>
     <version>1.1.1</version>
-    <title>clr.test.check magic port</title>
+    <title>clr.test.check</title>
     <authors>skydread1</authors>
     <description>Contains the core references for the Clojure lib test.check.</description>
-    <repository url="https://github.com/skydread1/clr.test.check/clojure.test.check" />
-    <references>
-		  <reference file="Build\clojure.test.check.clj.dll" />
-      <reference file="Build\clojure.test.check.generators.clj.dll" />
-      <reference file="Build\clojure.test.check.impl.clj.dll" />
-      <reference file="Build\clojure.test.check.random.clj.dll" />
-      <reference file="Build\clojure.test.check.results.clj.dll" />
-      <reference file="Build\clojure.test.check.rose_tree.clj.dll" />
-    </references>
+    <repository type="git" url="https://github.com/skydread1/clr.test.check" />
+    <dependencies>
+      <group targetFramework="netstandard2.0"></group>
+    </dependencies>
   </metadata>
   <files>
-    <file src="Build\clojure.test.check.clj.dll" target="lib" />
-    <file src="Build\clojure.test.check.generators.clj.dll" target="lib" />
-    <file src="Build\clojure.test.check.impl.clj.dll" target="lib" />
-    <file src="Build\clojure.test.check.random.clj.dll" target="lib" />
-    <file src="Build\clojure.test.check.results.clj.dll" target="lib" />
-    <file src="Build\clojure.test.check.rose_tree.clj.dll" target="lib" />
+    <file src="bin\Release\netstandard2.0\*.clj.dll" target="lib\netstandard2.0\" />
   </files>
 </package>
