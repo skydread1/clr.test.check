@@ -8,8 +8,4 @@
             https://api.nuget.org/v3/index.json
         </RestoreAdditionalProjectSources>
     </PropertyGroup>
-    <ItemGroup>
-        <Reference Include="build\clojure.test.check.clj.dll" />
-        <Reference Include="build\clojure.test.check.clojure_test.clj.dll" />
-    </ItemGroup>
 </Project>
