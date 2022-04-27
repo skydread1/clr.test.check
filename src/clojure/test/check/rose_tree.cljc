@@ -10,7 +10,7 @@
 (ns clojure.test.check.rose-tree
   "A lazy tree data structure used for shrinking."
   (:refer-clojure :exclude [filter remove seq])
- (:require [#?(:default clojure.core :cljs cljs.core) :as core]))                    ;;; Changed :clj to :default
+  #_(:require [#?(:default clojure.core :cljs cljs.core) :as core]))                    ;;; Changed :clj to :default
 
 (deftype RoseTree [root children]
   #?(:default  clojure.lang.Indexed                                                  ;;; Changed :clj to :default
@@ -46,7 +46,7 @@
   "Exclude the nth value in a collection."
   [n coll]
   (lazy-seq
-   (when-let [s (core/seq coll)]
+   (when-let [s (clojure.core/seq coll)]
      (if (zero? n)
        (rest coll)
        (cons (first s)
@@ -91,7 +91,7 @@
   [pred rose]
   (make-rose (root rose)
              (map #(filter pred %)
-                  (core/filter #(pred (root %)) (children rose)))))
+                  (clojure.core/filter #(pred (root %)) (children rose)))))
 
 (defn permutations
   "Create a seq of vectors, where each rose in turn, has been replaced
@@ -128,7 +128,7 @@
 (defn shrink
   {:no-doc true}
   [f roses]
-  (if (core/seq roses)
+  (if (clojure.core/seq roses)
     (make-rose (apply f (map root roses))
                (map #(shrink f %) (remove (unchunk roses))))
     (make-rose (f) [])))
@@ -177,7 +177,7 @@
 
 (defn- make-stack
   [children stack]
-  (if-let [s (core/seq children)]
+  (if-let [s (clojure.core/seq children)]
     (cons children stack)
     stack))
 
@@ -195,13 +195,13 @@
                    (lazy-seq
                     (if-not (seen node)
                       (cons node
-                            (if (core/seq the-children)
+                            (if (clojure.core/seq the-children)
                               (helper (first the-children) (conj seen node) (make-stack (rest the-children) stack))
-                              (when-let [s (core/seq stack)]
+                              (when-let [s (clojure.core/seq stack)]
                                 (let [f (ffirst s)
                                       r (rest (first s))]
                                   (helper f (conj seen node) (make-stack r (rest s)))))))
-                      (when-let [s (core/seq stack)]
+                      (when-let [s (clojure.core/seq stack)]
                         (let [f (ffirst s)
                               r (rest (first s))]
                           (helper f seen (make-stack r (rest s)))))))))]

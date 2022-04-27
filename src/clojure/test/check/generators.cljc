@@ -12,9 +12,9 @@
                             char boolean byte bytes sequence
                             shuffle not-empty symbol namespace
                             set sorted-set uuid double let])
-  (:require [#?(:default clojure.core :cljs cljs.core) :as core                        ;;; Change :clj to :default
-             #?@(:cljs [:include-macros true])]
-			[clojure.string :as string]
+  (:require #_(:default [clojure.core :as core]
+                        :cljs    [cljs.core :as core :include-macros true])
+			      [clojure.string :as string]
             [clojure.test.check.random :as random]
             [clojure.test.check.rose-tree :as rose]
             #?@(:cljs [[goog.string :as gstring]
@@ -64,7 +64,7 @@
   [{h :gen} k]
   (make-gen
    (fn [rnd size]
-     (core/let [[r1 r2] (random/split rnd)
+     (clojure.core/let [[r1 r2] (random/split rnd)
                 inner (h r1 size)
                 {result :gen} (k inner)]
        (result r2 size)))))
@@ -77,7 +77,7 @@
   {:no-doc true}
   [rr]
   (lazy-seq
-   (core/let [[r1 r2] (random/split rr)]
+   (clojure.core/let [[r1 r2] (random/split rr)]
      (cons r1
            (lazy-random-states r2)))))
 
@@ -157,9 +157,9 @@
   to build other generators."
   ([generator] (sample-seq generator 200))
   ([generator max-size]
-   (core/let [r (random/make-random)
+   (clojure.core/let [r (random/make-random)
               size-seq (make-size-range-seq max-size)]
-     (core/map #(rose/root (call-gen generator %1 %2))
+     (clojure.core/map #(rose/root (call-gen generator %1 %2))
                (lazy-random-states r)
                size-seq))))
 
@@ -193,10 +193,10 @@
   ([generator]
    (generate generator 30))
   ([generator size]
-   (core/let [rng (random/make-random)]
+   (clojure.core/let [rng (random/make-random)]
      (rose/root (call-gen generator rng size))))
   ([generator size seed]
-   (core/let [rng (random/make-random seed)]
+   (clojure.core/let [rng (random/make-random seed)]
      (rose/root (call-gen generator rng size)))))
 
 ;; Internal Helpers
@@ -208,11 +208,11 @@
 
 (defn- shrink-int
   [integer]
-  (core/map #(- integer %) (halfs integer)))
+  (clojure.core/map #(- integer %) (halfs integer)))
 
 (defn- int-rose-tree
   [value]
-  (rose/make-rose value (core/map int-rose-tree (shrink-int value))))
+  (rose/make-rose value (clojure.core/map int-rose-tree (shrink-int value))))
 
 ;; calc-long is factored out to support testing the surprisingly tricky double math.  Note:
 ;; An extreme long value does not have a precision-preserving representation as a double.
@@ -230,7 +230,7 @@
       :post [(integer? %)]}
   ;; Use -' on width to maintain accuracy with overflow protection.
   #?(:default                                                                                   ;;; Changed :clj to :default - but really should add code to differentiate on Long vs Int64 also
-     (core/let [width (-' upper lower -1)]
+     (clojure.core/let [width (-' upper lower -1)]
        ;; Preserve long precision if the width is in the long range.  Otherwise, we must accept
        ;; less precision because doubles don't have enough bits to preserve long equivalence at
        ;; extreme values.
@@ -271,7 +271,7 @@
   [sized-gen]
   (make-gen
    (fn [rnd size]
-     (core/let [sized-gen (sized-gen size)]
+     (clojure.core/let [sized-gen (sized-gen size)]
        (call-gen sized-gen rnd size)))))
 
 ;; Combinators and helpers
@@ -294,7 +294,7 @@
           #{-2.1582818131881376E83 -5.8460065493236117E48 9.729260993803226E166})"
   [n generator]
   (assert (generator? generator) "Second arg to resize must be a generator")
-  (core/let [{:keys [gen]} generator]
+  (clojure.core/let [{:keys [gen]} generator]
     (make-gen
      (fn [rnd _size]
        (gen rnd n)))))
@@ -329,7 +329,7 @@
          => (331 241 593 339 643 718 688 473 247 694)")
   [lower upper]
   ;; cast to long to support doubles as arguments per TCHECK-73
-  (core/let #?(:default                                                                               ;;; changed :clj to :default
+  (clojure.core/let #?(:default                                                                               ;;; changed :clj to :default
                [lower (long lower)
                 upper (long upper)]
 
@@ -337,7 +337,7 @@
                [])
   (make-gen
      (fn [rnd _size]
-       (core/let [value (rand-range rnd lower upper)]
+       (clojure.core/let [value (rand-range rnd lower upper)]
          (rose/filter
           #(and (>= % lower) (<= % upper))
           (int-rose-tree value)))))))
@@ -381,8 +381,8 @@
   (assert (every? (fn [[x g]] (and (number? x) (generator? g)))
                   pairs)
           "Arg to frequency must be a list of [num generator] pairs")
-  (core/let [pairs (filter (comp pos? first) pairs)
-             total (apply + (core/map first pairs))]
+  (clojure.core/let [pairs (filter (comp pos? first) pairs)
+             total (apply + (clojure.core/map first pairs))]
     (assert (seq pairs)
             "frequency must be called with at least one non-zero weight")
     ;; low-level impl for shrinking control
@@ -391,7 +391,7 @@
        (call-gen
         (gen-bind (choose 0 (dec total))
                   (fn [x]
-                    (core/let [idx (pick (core/map first pairs) (rose/root x))]
+                    (clojure.core/let [idx (pick (clojure.core/map first pairs) (rose/root x))]
                       (gen-fmap (fn [rose]
                                   (rose/make-rose (rose/root rose)
                                                   (lazy-seq
@@ -412,7 +412,7 @@
       => (:foo :baz :baz :bar :foo :foo :bar :bar :foo :bar)"
   [coll]
   (assert (seq coll) "elements cannot be called with an empty collection")
-  (core/let [v (vec coll)]
+  (clojure.core/let [v (vec coll)]
     (gen-fmap #(rose/fmap v %)
               (choose 0 (dec (count v))))))
 
@@ -423,7 +423,7 @@
          size size]
     (if (zero? tries-left)
       (throw (ex-fn {:pred pred, :gen, gen :max-tries max-tries}))
-      (core/let [[r1 r2] (random/split rng)
+      (clojure.core/let [[r1 r2] (random/split rng)
                  value (call-gen gen r1 size)]
         (if (pred (rose/root value))
           (rose/filter pred value)
@@ -462,7 +462,7 @@
   ([pred gen]
    (such-that pred gen 10))
   ([pred gen max-tries-or-opts]
-   (core/let [opts (cond (integer? max-tries-or-opts)
+   (clojure.core/let [opts (cond (integer? max-tries-or-opts)
                          {:max-tries max-tries-or-opts}
 
                          (map? max-tries-or-opts)
@@ -496,7 +496,7 @@
           [false true true true false true true true false])"
   [gen]
   (assert (generator? gen) "Arg to not-empty must be a generator")
-  (such-that core/not-empty gen))
+  (such-that clojure.core/not-empty gen))
 
 (defn no-shrink
   "Creates a new generator that is just like `gen`, except does not shrink
@@ -534,7 +534,7 @@
   (assert (every? generator? generators)
           "Args to tuple must be generators")
   (gen-fmap (fn [roses]
-              (rose/zip core/vector roses))
+              (rose/zip clojure.core/vector roses))
             (gen-tuple generators)))
 
 (def nat
@@ -596,7 +596,7 @@
     (sized #(choose 0 %))
     (fn [num-elements-rose]
       (gen-fmap (fn [roses]
-                  (rose/shrink-vector core/vector
+                  (rose/shrink-vector clojure.core/vector
                                       roses))
                 (gen-tuple (repeat (rose/root num-elements-rose)
                                    generator))))))
@@ -612,7 +612,7 @@
                   (rose/filter
                    (fn [v] (and (>= (count v) min-elements)
                                 (<= (count v) max-elements)))
-                   (rose/shrink-vector core/vector
+                   (rose/shrink-vector clojure.core/vector
                                        roses)))
                 (gen-tuple (repeat (rose/root num-elements-rose)
                                    generator)))))))
@@ -624,7 +624,7 @@
   (gen-bind (sized #(choose 0 %))
             (fn [num-elements-rose]
               (gen-fmap (fn [roses]
-                          (rose/shrink-vector core/list
+                          (rose/shrink-vector clojure.core/list
                                               roses))
                         (gen-tuple (repeat (rose/root num-elements-rose)
                                            generator))))))
@@ -640,7 +640,7 @@
   `coll`. Shrinks toward the original collection: `coll`. `coll` will
   be coerced to a vector."
   [coll]
-  (core/let [coll (if (vector? coll) coll (vec coll))
+  (clojure.core/let [coll (if (vector? coll) coll (vec coll))
              index-gen (choose 0 (dec (count coll)))]
     (fmap #(reduce swap coll %)
           ;; a vector of swap instructions, with count between
@@ -655,15 +655,15 @@
 #?(:cljr                                                                      ;;; Changed :clj to :cljr, but should do the right thing, the Min/MaxValue thing
    (def byte
      "Generates `java.lang.Byte`s, using the full byte-range."
-    (fmap core/byte (choose Byte/MinValue Byte/MaxValue))))                ;;; Byte/MIN_VALUE Byte/MAX_VALUE
+    (fmap clojure.core/byte (choose Byte/MinValue Byte/MaxValue))))                ;;; Byte/MIN_VALUE Byte/MAX_VALUE
 
 #?(:cljr                                                                        ;;; Changed :clj to :cljr,
    (def bytes
      "Generates byte-arrays."
-     (fmap core/byte-array (vector byte))))
+     (fmap clojure.core/byte-array (vector byte))))
 
 (defn hash-map
-  "Like clojure.core/hash-map, except the values are generators.
+  "Like clojure.clojure.core/hash-map, except the values are generators.
    Returns a generator that makes maps with the supplied keys and
    values generated using the supplied generators.
 
@@ -680,7 +680,7 @@
            {:a false, :b 0})"
   [& kvs]
   (assert (even? (count kvs)))
-  (core/let [ks (take-nth 2 kvs)
+  (clojure.core/let [ks (take-nth 2 kvs)
              vs (take-nth 2 (rest kvs))]
     (assert (every? generator? vs)
             "Value args to hash-map must be generators")
@@ -729,7 +729,7 @@
                (rose/shrink-vector #(into empty-coll %&)))
 
           :else
-          (core/let [[rng1 rng2] (random/split rng)
+          (clojure.core/let [[rng1 rng2] (random/split rng)
                      rose (call-gen gen rng1 size)
                      root (rose/root rose)
                      k (key-fn root)]
@@ -742,25 +742,25 @@
                      0))))))
 
 (defn ^:private distinct-by?
-  "Like clojure.core/distinct? but takes a collection instead of varargs,
+  "Like clojure.clojure.core/distinct? but takes a collection instead of varargs,
   and returns true for empty collections."
   [f coll]
   (or (empty? coll)
-      (apply distinct? (core/map f coll))))
+      (apply distinct? (clojure.core/map f coll))))
 
 (defn ^:private the-shuffle-fn
   "Returns a shuffled version of coll according to the rng.
   
   Note that this is not a generator, it is just a utility function."
   [rng coll]
-  (core/let [empty-coll (empty coll)
+  (clojure.core/let [empty-coll (empty coll)
              v (vec coll)
              card (count coll)
              dec-card (dec card)]
     (into empty-coll
           (first
            (reduce (fn [[v rng] idx]
-                     (core/let [[rng1 rng2] (random/split rng)
+                     (clojure.core/let [[rng1 rng2] (random/split rng)
                                 swap-idx (rand-range rng1 idx dec-card)]
                        [(swap v [idx swap-idx]) rng2]))
                    [v rng]
@@ -771,12 +771,12 @@
    {:keys [num-elements min-elements max-elements max-tries ex-fn]
     :or {max-tries 10
          ex-fn #(ex-info "Couldn't generate enough distinct elements!" %)}}]
-  (core/let [shuffle-fn (if ordered?
+  (clojure.core/let [shuffle-fn (if ordered?
                           the-shuffle-fn
                           (fn [_rng coll] coll))
              hard-min-elements (or num-elements min-elements 1)]
     (if num-elements
-      (core/let [size-pred #(= num-elements (count %))]
+      (clojure.core/let [size-pred #(= num-elements (count %))]
         (assert (and (nil? min-elements) (nil? max-elements)))
         (make-gen
          (fn [rng gen-size]
@@ -789,7 +789,7 @@
               size-pred)
             (coll-distinct-by* empty-coll key-fn shuffle-fn gen rng gen-size
                                num-elements hard-min-elements max-tries ex-fn)))))
-      (core/let [min-elements (or min-elements 0)
+      (clojure.core/let [min-elements (or min-elements 0)
                  size-pred (if max-elements
                              #(<= min-elements (count %) max-elements)
                              #(<= min-elements (count %)))]
@@ -798,7 +798,7 @@
            (choose min-elements max-elements)
            (sized #(choose min-elements (+ min-elements %))))
          (fn [num-elements-rose]
-           (core/let [num-elements (rose/root num-elements-rose)]
+           (clojure.core/let [num-elements (rose/root num-elements-rose)]
              (make-gen
               (fn [rng gen-size]
                 (rose/filter
@@ -958,7 +958,7 @@
   ([gen] (sorted-set gen {}))
   ([gen opts]
    (assert (generator? gen) "First arg to sorted-set must be a generator!")
-   (coll-distinct-by (core/sorted-set) identity false false gen opts)))
+   (coll-distinct-by (clojure.core/sorted-set) identity false false gen opts)))
 
 (defn map
   "Creates a generator that generates maps, with keys chosen from
@@ -1014,7 +1014,7 @@
                  (cond-> (zero? min) (abs)))]
     (if (<= min res max)
       res
-      (core/let [res' (- res)]
+      (clojure.core/let [res' (- res)]
         (if (<= min res' max)
           res'
           (recur #?(:default (bit-shift-right res 1)                                          ;;; Changed :clj to :default
@@ -1028,10 +1028,10 @@
   "Like large-integer*, but assumes range includes zero."
   [min max]
   (sized (fn [size]
-           (core/let [size (core/max size 1) ;; no need to worry about size=0
-                      max-bit-count (core/min size #?(:default 64 :cljs 54))]                    ;;; Changed :clj to :default
+           (clojure.core/let [size (clojure.core/max size 1) ;; no need to worry about size=0
+                      max-bit-count (clojure.core/min size #?(:default 64 :cljs 54))]                    ;;; Changed :clj to :default
              (gen-fmap (fn [rose]
-                         (core/let [[bit-count x] (rose/root rose)]
+                         (clojure.core/let [[bit-count x] (rose/root rose)]
                            (int-rose-tree (long->large-integer bit-count x min max))))
                        (tuple (choose 1 max-bit-count)
                               gen-raw-long))))))
@@ -1048,7 +1048,7 @@
       => (9000 9001 9001 9002 9000 9003 9006 9030 9005 9044)"
   {:added "0.9.0"}
   [{:keys [min max]}]
-  (core/let [min (or min MIN_INTEGER)
+  (clojure.core/let [min (or min MIN_INTEGER)
              max (or max MAX_INTEGER)]
     (assert (<= min max))
     (such-that #(<= min % max)
@@ -1153,14 +1153,14 @@
 	  :cljr                                                                                     ;;; had to give up and actually insert extra lines. Sigh.
 	  (if (zero? x)
 	    -1023
-		(core/let [bits (BitConverter/DoubleToInt64Bits ^Double x)
-		      exp (core/int (bit-and (unsigned-bit-shift-right bits 52) 0x7ff))
+		(clojure.core/let [bits (BitConverter/DoubleToInt64Bits ^Double x)
+		      exp (clojure.core/int (bit-and (unsigned-bit-shift-right bits 52) 0x7ff))
 			  exp (if (zero? exp) 1 exp)]
 		   (- exp 1023)))
       :cljs
       (if (zero? x)
         -1023
-        (core/let [x (Math/abs x)
+        (clojure.core/let [x (Math/abs x)
 
                    res
                    (Math/floor (* (Math/log x) (.-LOG2E js/Math)))
@@ -1177,7 +1177,7 @@
   [lower-bound upper-bound]
   (letfn [(gen-exp [lb ub]
             (sized (fn [size]
-                     (core/let [qs8 (bit-shift-left 1 (quot (min 200 size) 8))]
+                     (clojure.core/let [qs8 (bit-shift-left 1 (quot (min 200 size) 8))]
                        (cond (<= lb 0 ub)
                              (choose (max lb (- qs8)) (min ub qs8))
 
@@ -1190,7 +1190,7 @@
              (nil? upper-bound))
       (tuple (gen-exp -1023 1023)
              (elements [1.0 -1.0]))
-      (core/let [lower-bound (or lower-bound MIN_NEG_VALUE)
+      (clojure.core/let [lower-bound (or lower-bound MIN_NEG_VALUE)
                  upper-bound (or upper-bound MAX_POS_VALUE)
                  lbexp (max -1023 (get-exponent lower-bound))
                  ubexp (max -1023 (get-exponent upper-bound))]
@@ -1217,7 +1217,7 @@
   range."
   [exp sign]
   (if (neg? sign)
-    (core/let [[low high] (block-bounds exp (- sign))]
+    (clojure.core/let [[low high] (block-bounds exp (- sign))]
       [(- high) (- low)])
     (if (= -1023 exp)
       [0.0 (-> 1.0 (scalb 52) dec (scalb -1074))]
@@ -1229,7 +1229,7 @@
   {:pre [(or (nil? lower-bound)
              (nil? upper-bound)
              (<= lower-bound upper-bound))]}
-  (core/let [pred (if lower-bound
+  (clojure.core/let [pred (if lower-bound
                     (if upper-bound
                       #(<= lower-bound % upper-bound)
                       #(<= lower-bound %))
@@ -1238,7 +1238,7 @@
 
              gen
              (fmap (fn [[[exp sign] significand]]
-                     (core/let [;; 1.0 <= base < 2.0
+                     (clojure.core/let [;; 1.0 <= base < 2.0
                                 base (inc (/ significand (Math/Pow 2 52)))                                      ;;; Math/pow  -- should conditionalize
                                 x (-> base (scalb exp) (* sign))]
                        (if (or (nil? pred) (pred x))
@@ -1246,7 +1246,7 @@
                          ;; Scale things a bit when we have a partial range
                          ;; to deal with. It won't be great for generating
                          ;; simple numbers, but oh well.
-                         (core/let [[low high] (block-bounds exp sign)
+                         (clojure.core/let [[low high] (block-bounds exp sign)
 
                                     block-lb (cond-> low  lower-bound (max lower-bound))
                                     block-ub (cond-> high upper-bound (min upper-bound))
@@ -1271,7 +1271,7 @@
   {:added "0.9.0"}
   [{:keys [infinite? NaN? min max]
     :or {infinite? true, NaN? true}}]
-  (core/let [frequency-arg (cond-> [[95 (double-finite min max)]]
+  (clojure.core/let [frequency-arg (cond-> [[95 (double-finite min max)]]
 
                              (if (nil? min)
                                (or (nil? max) (<= 0.0 max))
@@ -1337,7 +1337,7 @@
                        (+' res (*' multiple (first xs))))
 
                 (pos? bits-left)
-                (core/let [x (-> xs
+                (clojure.core/let [x (-> xs
                                  first
                                  (bit-shift-right (- 32 bits-left)))]
                   (+' res (*' multiple x)))
@@ -1345,11 +1345,11 @@
                 :else
                 res)))
       (vector (choose 0 dec-2-32)
-              (Math/Ceiling (/ (core/double max-bit-length) 32))))))                            ;;; Math/ceil
+              (Math/Ceiling (/ (clojure.core/double max-bit-length) 32))))))                            ;;; Math/ceil
 
 #?(:cljr                                                                                        ;;; Changed :clj to :cljr
    (def ^:private size-bounded-bignat
-     (core/let [poor-shrinking-gen
+     (clojure.core/let [poor-shrinking-gen
                 (sized
                  (fn [size]
                    (bind (choose 0 (max 0 (* size 6)))
@@ -1386,15 +1386,15 @@
 
 (def char
   "Generates character from 0-255."
-  (fmap core/char (choose 0 255)))
+  (fmap clojure.core/char (choose 0 255)))
 
 (def char-ascii
   "Generates only ascii character."
-  (fmap core/char (choose 32 126)))
+  (fmap clojure.core/char (choose 32 126)))
 
 (def char-alphanumeric
   "Generates alphanumeric characters."
-  (fmap core/char
+  (fmap clojure.core/char
         (one-of [(choose 48 57)
                  (choose 65 90)
                  (choose 97 122)])))
@@ -1408,7 +1408,7 @@
 
 (def char-alpha
   "Generate alpha characters."
-  (fmap core/char
+  (fmap clojure.core/char
         (one-of [(choose 65 90)
                  (choose 97 122)])))
 
@@ -1457,7 +1457,7 @@
   Symbols that start with +3 or -2 are not readable because they look
   like numbers."
   [c  d]
-  (core/boolean (and d
+  (clojure.core/boolean (and d
                      (or (#?(:default = :cljs identical?) \+ c)                  ;;; Changed :clj to :default
                          (#?(:default = :cljs identical?) \- c))                 ;;; Changed :clj to :default
                      (digit? d))))
@@ -1467,7 +1467,7 @@
   (->> (tuple char-symbol-initial (vector char-symbol-noninitial))
        (such-that (fn [[c [d]]] (not (+-or---digit? c d))))
        (fmap (fn [[c cs]]
-               (core/let [s (clojure.string/join (cons c cs))]
+               (clojure.core/let [s (clojure.string/join (cons c cs))]
                  (-> s
                      (string/replace #":{2,}" ":")
                      (string/replace #":$" "")))))))
@@ -1482,7 +1482,7 @@
 (def keyword
   "Generates keywords without namespaces."
   (->> symbol-name-or-namespace
-       (fmap core/keyword)
+       (fmap clojure.core/keyword)
        (resize-symbolish-generator)))
 
 (def
@@ -1490,14 +1490,14 @@
   keyword-ns
   "Generates keywords with namespaces."
   (->> (tuple symbol-name-or-namespace symbol-name-or-namespace)
-       (fmap (fn [[ns name]] (core/keyword ns name)))
+       (fmap (fn [[ns name]] (clojure.core/keyword ns name)))
        (resize-symbolish-generator)))
 
 (def symbol
   "Generates symbols without namespaces."
   (frequency [[100
                (->> symbol-name-or-namespace
-                    (fmap core/symbol)
+                    (fmap clojure.core/symbol)
                     (resize-symbolish-generator))]
               [1 (return '/)]]))
 
@@ -1506,7 +1506,7 @@
   symbol-ns
   "Generates symbols with namespaces."
   (->> (tuple symbol-name-or-namespace symbol-name-or-namespace)
-       (fmap (fn [[ns name]] (core/symbol ns name)))
+       (fmap (fn [[ns name]] (clojure.core/symbol ns name)))
        (resize-symbolish-generator)))
 
 (def ratio
@@ -1533,7 +1533,7 @@
       ;; seems to be 10x faster
       (make-gen
        (fn [rng _size]
-         (core/let [[r1 r2] (random/split rng)
+         (clojure.core/let [[r1 r2] (random/split rng)
                     x1 (-> (random/rand-long r1)
                            (bit-and -45057)
                            (bit-or 0x4000))
@@ -1549,8 +1549,8 @@
       ;; generating 31 numbers
       (fmap (fn [nibbles]
               (letfn [(hex [idx] (.toString (nibbles idx) 16))]
-                (core/let [rhex (-> (nibbles 15) (bit-and 3) (+ 8) (.toString 16))]
-                  (core/uuid (str (hex 0)  (hex 1)  (hex 2)  (hex 3)
+                (clojure.core/let [rhex (-> (nibbles 15) (bit-and 3) (+ 8) (.toString 16))]
+                  (clojure.core/uuid (str (hex 0)  (hex 1)  (hex 2)  (hex 3)
                                   (hex 4)  (hex 5)  (hex 6)  (hex 7)  "-"
                                   (hex 8)  (hex 9)  (hex 10) (hex 11) "-"
                                   "4"      (hex 12) (hex 13) (hex 14) "-"
@@ -1615,14 +1615,14 @@
   ;; not greater than the `size` ~99% of the time.
   (long (Math/Pow size 1.1)))                                          ;;; Math/pow
 
-(core/let [log2 (Math/Log 2)]                                          ;;; Math/log
+(clojure.core/let [log2 (Math/Log 2)]                                          ;;; Math/log
   (defn ^:private random-pseudofactoring
     "Returns (not generates) a random collection of integers `xs`
   greater than 1 such that (<= (apply * xs) n)."
     [n rng]
     (if (<= n 2)
       [n]
-      (core/let [log (Math/Log n)                                      ;;; Math/log
+      (clojure.core/let [log (Math/Log n)                                      ;;; Math/log
                  [r1 r2] (random/split rng)
                  n1 (-> (random/rand-double r1)
                         (* (- log log2))
@@ -1638,7 +1638,7 @@
   "Like sized, but passes an rng instead of a size."
   [func]
   (make-gen (fn [rng size]
-              (core/let [[r1 r2] (random/split rng)]
+              (clojure.core/let [[r1 r2] (random/split rng)]
                 (call-gen
                  (func r1)
                  r2
@@ -1689,7 +1689,7 @@
                  (fn [max-leaf-count]
                    (randomized
                     (fn [rng]
-                      (core/let [sizes (random-pseudofactoring max-leaf-count rng)
+                      (clojure.core/let [sizes (random-pseudofactoring max-leaf-count rng)
                                  sized-scalar-gen (resize size scalar-gen)]
                         (reduce (fn [g size]
                                   (bind (choose 0 10)
@@ -1726,13 +1726,13 @@
 
 (defmacro let
   "Macro for building generators using values from other generators.
-  Uses a binding vector with the same syntax as clojure.core/let,
+  Uses a binding vector with the same syntax as clojure.clojure.core/let,
   where the right-hand side of the binding pairs are generators, and
   the left-hand side are names (or destructuring forms) for generated
   values.
 
   Subsequent generator expressions can refer to the previously bound
-  values, in the same way as clojure.core/let.
+  values, in the same way as clojure.clojure.core/let.
 
   The body of the let can be either a value or a generator, and does
   the expected thing in either case. In this way let provides the
@@ -1759,9 +1759,9 @@
   (assert (even? (count bindings))
           "gen/let requires an even number of forms in binding vector")
   (if (empty? bindings)
-    `(core/let [val# (do ~@body)]
+    `(clojure.core/let [val# (do ~@body)]
        (if (clojure.test.check.generators/generator? val#)
          val#
          (return val#)))
-    (core/let [[binding gen & more] bindings]
+    (clojure.core/let [[binding gen & more] bindings]
       `(clojure.test.check.generators/bind ~gen (fn [~binding] (let [~@more] ~@body))))))
