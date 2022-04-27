@@ -662,7 +662,7 @@
   [value]
   (= value (-> value prn-str edn/read-string)))
 
-(def infinities #{1E1000 -1E1000})
+(def infinities #{##Inf ##-Inf})
 
 (def infinity-syntax?
   (edn-roundtrip? (first infinities)))
