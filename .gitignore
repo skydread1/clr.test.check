@@ -21,3 +21,11 @@ obj
 *.user
 *.suo
 *.nupkg
+
+#Mac
+.DS_Store
+
+#Local config and cache
+nuget.config
+.nrepl-port
+.cpcache/
