@@ -18,7 +18,10 @@
   (result-data [_]
     ;; spelling out the whole keyword here since `::error` is
     ;; different in self-hosted cljs.
-    {:clojure.test.check.properties/error error}))
+    {:clojure.test.check.properties/error error})
+  #?@(:cljr
+      [clojure.lang.IPersistentCollection
+       (empty [_] nil)]))
 
 (defn ^:private exception?
   [x]

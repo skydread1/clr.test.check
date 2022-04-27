@@ -25,7 +25,10 @@
 ;; (internal functions)
 ;; ---------------------------------------------------------------------------
 
-(defrecord Generator [gen])
+(defrecord Generator [gen]
+  #?@(:cljr
+      [clojure.lang.IPersistentCollection
+       (empty [_] nil)]))
 
 (defn generator?
   "Test if `x` is a generator. Generators should be treated as opaque values."
